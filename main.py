@@ -20,8 +20,6 @@ print("generating word list...")
 for i in lines:
   stripedLines.append(i.strip())
 
-#PROBABLY FIXED: for a word 'catch' the last c is black square, so it automatically adds it to unusable letter list, but the first c can be yellow
-
 def get_spot(id):
   for i in range(len(db.keys())):
     try:
@@ -82,7 +80,7 @@ async def stats(
   checkIfFirstTime(ctx.author.id)
   index = get_spot(ctx.author.id)
   embed=discord.Embed(title="Stats", color=discord.Color.green())
-  #embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar)
+  embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar)
   embed.add_field(name="Total times played: ", value=str(db[index][5]), inline = True)
   embed.add_field(name="Current streak: ", value=str(db[index][6]), inline = True)
   embed.add_field(name="Maximum streak: ", value=str(db[index][7]), inline = True)
