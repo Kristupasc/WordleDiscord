@@ -52,7 +52,7 @@ async def wordle(
     ctx: discord.ApplicationContext,
     word: Option(str, "5-letter word")
 ):
-  await ctx.respond("pala biski...")
+  await ctx.respond("thinking...")
   now = datetime.now()
   checkIfFirstTime(ctx.author.id)
   index = get_spot(ctx.author.id)
@@ -76,7 +76,7 @@ async def wordle(
 async def stats(
   ctx: discord.ApplicationContext,
 ):
-  await ctx.respond("pala biski...")
+  await ctx.respond("thinking...")
   checkIfFirstTime(ctx.author.id)
   index = get_spot(ctx.author.id)
   embed=discord.Embed(title="Stats", color=discord.Color.green())
@@ -97,7 +97,7 @@ async def stats(
 async def info(
   ctx: discord.ApplicationContext,
 ):
-  await ctx.respond("pala biski...")
+  await ctx.respond("thinking...")
   now = datetime.now()
   checkIfFirstTime(ctx.author.id)
   index = get_spot(ctx.author.id)
@@ -128,7 +128,7 @@ async def info(
 async def help(
   ctx: discord.ApplicationContext,
 ):
-  await ctx.respond("pala biski...")
+  await ctx.respond("thinking...")
   embed=discord.Embed(title="Help menu", color=discord.Color.red())
   embed.add_field(name="Game description", value = "In Wordle, you have to guess a randomly selected five-letter word in six tries. After you input a word, in every letter, you get three different outcome.\n:green_square: means that the letter in that spot matches the letter in the selected word.\n:yellow_square: means that the letter is in the selected word, but in the wrong location.\n:black_large_square: means that the corresponding letter is not in the selected word.\n**Note:** you can only play this game once per day!", inline = False)
   embed.add_field(name="Commands", value="``/wordle <5-letter word>`` starts/continues a game.\n``/stats`` shows your current stats like streaks, win/loss count, games played and today's board.\n``/info`` shows the words that you used and the letters that you used which turned out to be :black_large_square. This command can only be run if you are in game.", inline = False)
