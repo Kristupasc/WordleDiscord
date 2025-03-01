@@ -1,75 +1,94 @@
 import discord
-from discord import Option
-from replit import db
 from datetime import datetime
 import wordGenerator
 
-empty_wordle = ":black_large_square: :black_large_square: :black_large_square: :black_large_square: :black_large_square:"
 
-test_wordle = empty_wordle + "\n:green_square: :black_large_square: :yellow_square: :black_large_square: :black_large_square:\n:green_square: :yellow_square: :yellow_square: :black_large_square: :black_large_square:\n:green_square: :yellow_square: :yellow_square: :black_large_square: :green_square:\n:green_square: :green_square: :green_square: :green_square: :green_square:\n"
+async def play(ctx, index, command, db):
+    now = datetime.now()
+    user_data = db.get(index)
+    word = user_data[2]           # the correct word for this user
+    board_list = user_data[3]
+    blacklisted_letters = user_data[10]
+    tried_words = user_data[11]
 
-async def play(ctx, index, command):
-  yellow = []
-  now = datetime.now()
-  green_counter = 0
-  didFind = False
-  word = db[index][2]
-  our_word = command
-  answer = ""
-  if len(our_word) == 5:
-    copy = list(word)
-    for i in range(len(our_word)):
-      if our_word[i] == copy[i]:
-          answer += ":green_square: "
-          copy[i] = '0'
-          green_counter += 1
-          didFind = True
-      else:
-          for j in range(len(copy)):
-              if our_word[i] == copy[j]:
-                  if our_word[j] == copy[j]:
-                    if (our_word[i] not in db[index][10]) and (our_word[i] not in yellow):
-                      db[index][10].append(our_word[i])
-                    answer += ":black_large_square: "
-                  else:
-                    copy[j] = '0'
-                    yellow.append(our_word[j])
-                    answer += ":yellow_square: "
-                  didFind = True
-                  break
-      if not didFind:
-        if (our_word[i] not in db[index][10]) and (our_word[i] not in yellow):
-          db[index][10].append(our_word[i])
-        answer += ":black_large_square: "
-      didFind = False
-  db[index][11].append(our_word)
-  answer += "\n"
-  # update the database and send the result.
-  if db[index][3] == []:
-    db[index][3] = [answer]
-  else:
-    db[index][3].append(answer)
-  board = ""
-  for i in range(len(db[index][3])):
-    board += db[index][3][i]
-  await ctx.edit(content=board)
-  if green_counter == 5 or len(db[index][3]) >= 6:
-    # The game is over
-    # alter the database to forbid the player from playing today and add some statistics
-    db[index][5] += 1
-    if green_counter == 5:
-      if db[index][1] == now.day -1 or now.day == 1 or db[index][1] == -1:
-        db[index][6] += 1
-        # If the current streak is the highest
-        if db[index][6] > db[index][7]:
-          db[index][7] = db[index][6]
-      db[index][8] += 1
-      await ctx.respond("You guessed the word!\n(It was ``" + db[index][2] + "``)\nType ``/stats`` to see your stats.")
-    else:
-      db[index][6] = 0
-      db[index][9] += 1
-      await ctx.respond("You ran out of tries :(\nThe word was: ``" + db[index][2] + "``\nType ``/stats`` to see your stats.")
-    db[index] = db[index][0], now.day, wordGenerator.generate_word().lower().strip(), db[index][3], True, db[index][5], db[index][6], db[index][7], db[index][8], db[index][9], [], []
+    green_counter = 0
+    answer_line = ""
 
+    # Keep track of letters we flagged as "yellow" to avoid blacklisting them
+    found_yellow = []
 
-          
+    if len(command) == 5:
+        # Make a copy of the correct word so we can mark used letters as we go
+        copy_of_correct = list(word)
+
+        for i in range(5):
+            guess_letter = command[i]
+            if guess_letter == copy_of_correct[i]:
+                # This letter is correct and in the correct position
+                answer_line += ":green_square: "
+                copy_of_correct[i] = "0"  # Mark as used
+                green_counter += 1
+            else:
+                # Check if guess_letter is anywhere else in copy_of_correct
+                found_spot = False
+                for j in range(5):
+                    if guess_letter == copy_of_correct[j]:
+                        # If we haven't used that letter or matched it yet
+                        copy_of_correct[j] = "0"
+                        answer_line += ":yellow_square: "
+                        found_yellow.append(guess_letter)
+                        found_spot = True
+                        break
+                if not found_spot:
+                    # It's not in the word at all
+                    if guess_letter not in blacklisted_letters and guess_letter not in found_yellow:
+                        blacklisted_letters.append(guess_letter)
+                    answer_line += ":black_large_square: "
+
+    # The user tried this word
+    tried_words.append(command)
+    answer_line += "\n"
+
+    # Append this row of squares to their board
+    board_list.append(answer_line)
+
+    # Update the database for this user
+    user_data[3] = board_list
+    user_data[10] = blacklisted_letters
+    user_data[11] = tried_words
+    db.set(index, user_data)
+
+    # Re-create the board for display
+    board_output = "".join(board_list)
+    await ctx.edit(content=board_output)
+
+    # Check if they won or used up their tries
+    if green_counter == 5 or len(board_list) >= 6:
+        # The game is over
+        user_data[5] += 1  # total_plays += 1
+
+        if green_counter == 5:
+            # They guessed the word
+            # If it's a new day or hasn't played before, extend the streak
+            if user_data[1] == now.day - 1 or user_data[1] == -1 or now.day == 1:
+                user_data[6] += 1  # current_streak += 1
+                if user_data[6] > user_data[7]:
+                    user_data[7] = user_data[6]  # max_streak = current_streak
+            user_data[8] += 1  # times_won += 1
+            await ctx.respond(f"You guessed the word!\n(It was `{word}`)\nType `/stats` to see your stats.")
+        else:
+            # They ran out of tries
+            user_data[6] = 0     # reset current streak
+            user_data[9] += 1    # times_lost += 1
+            await ctx.respond(f"You ran out of tries :(\nThe word was: `{word}`\nType `/stats` to see your stats.")
+
+        # Set them as finished for this day and pick a new word for the next day
+        user_data[1] = now.day
+        user_data[2] = wordGenerator.generate_word().lower().strip()
+        user_data[4] = True
+        # Clear out board, blacklisted letters, tried words for the next day
+        user_data[3] = board_list  # or []
+        user_data[10] = []
+        user_data[11] = []
+
+        db.set(index, user_data)
