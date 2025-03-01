@@ -8,13 +8,9 @@ import pickledb
 import wordleGame
 import wordGenerator
 
-#
-# If you still want to read your token from an environment variable,
-# you can do so here. If you prefer to hardcode your token, just
-# replace `os.getenv("DISCORD_TOKEN")` with a string: "YOUR_BOT_TOKEN"
-#
+
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")  # or "YOUR_BOT_TOKEN"
+TOKEN = os.getenv("DISCORD_TOKEN") # Load the token of the bot
 
 client = discord.Bot()
 servers = [846826501865603092, 515932305689411594]
@@ -122,6 +118,9 @@ async def wordle(ctx: discord.ApplicationContext, word: Option(str, "5-letter wo
 
 @client.slash_command(guild_ids=servers, description="Shows your stats.")
 async def stats(ctx: discord.ApplicationContext):
+    """
+    Statistics slash command. Shows all the related information to the user.
+    """
     await ctx.respond("Thinking...")
     check_if_first_time(ctx.author.id)
     index = get_spot(ctx.author.id)
@@ -151,6 +150,9 @@ async def stats(ctx: discord.ApplicationContext):
 
 @client.slash_command(guild_ids=servers, description="Shows the letters/words you used.")
 async def info(ctx: discord.ApplicationContext):
+    """
+    Info slash command. Shows the current status of today's game.
+    """
     await ctx.respond("Thinking...")
     now = datetime.now()
     check_if_first_time(ctx.author.id)
@@ -193,6 +195,9 @@ async def info(ctx: discord.ApplicationContext):
 
 @client.slash_command(guild_ids=servers, description="Shows a help menu.")
 async def help(ctx: discord.ApplicationContext):
+    """
+    Shows a help menu.
+    """
     await ctx.respond("Thinking...")
     embed = discord.Embed(title="Help menu", color=discord.Color.red())
     embed.add_field(
