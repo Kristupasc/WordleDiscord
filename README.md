@@ -1,7 +1,5 @@
 # WordleDiscord
-A discord bot that utilizes the new slash-commands and repl.it database that lets you play wordle every day!
-
-### <---WARNING: This bot is no longer maintained and might have major issues. Use at your own risk!--->
+A Wordle discord bot that utilizes the new slash-commands and pickledb as a database.
 
 **Command list:**
 
